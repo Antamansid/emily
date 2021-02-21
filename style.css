@@ -1,0 +1,60 @@
+html{
+  height: 100%;
+}
+body{
+  display: grid;
+  grid-gap: 5px;
+  grid-template-rows: 0.3fr 5fr;
+  width: 100%;
+  height: 100%;
+}
+main{  
+  display: grid;
+  grid-gap: 5px;
+  grid-template-columns: 0.3fr 1fr 0.3fr;
+}
+.columnView{  
+  display: grid;
+  grid-gap: 5px;
+  grid-template-rows: 1fr 1fr 1fr;
+}
+.columnWork{  
+  display: grid;
+  grid-template-rows: 2fr 1fr;
+  grid-gap: 5px;
+}
+.columnLook{
+  display: grid;
+  grid-gap: 5px;
+  grid-template-rows: 1fr 1fr;
+}
+.diagram{  
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.meetings{
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+.namePanel{
+  margin: auto;
+}
+.panels{  
+  display: grid;
+  grid-template-rows: 1fr 5fr;
+  border: 2px solid grey;
+  border-radius: 5px;
+}
+.navigationMenu{
+  display: grid;
+  font-size: xx-large;
+}
+.codeIframe{  
+  display: grid;
+  grid-template-rows: 7fr 1fr 1fr;
+  border: 2px solid grey;
+  border-radius: 5px;
+}
