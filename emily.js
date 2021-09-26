@@ -42,6 +42,8 @@ function init() {
         }
       });
     })
+    makeFunc(toNode);
+
     //Потом делаем с ними то, что описано в функции
     //Потом записываем все это в ретерн в боттом
   });
@@ -59,6 +61,24 @@ function init() {
       func.value = node.data.functionNotBabled;
     });
     console.log('changed End');
+  })
+
+  //При удалении чего-то (пока нужно только линии)
+  myDiagram.addDiagramListener('SelectionDeleted', (e)=>{
+    console.log(e.subject);
+    e.subject.each((some)=>{
+      if(some instanceof go.Link){
+        //Получаем инфу куда стрелка намалевалась
+        let toNode = some.toNode;
+        //Куда стрелка намалевалась по порту (айди порта) сразу преобразуем в число плюсом
+        let toPort = +some.toPortId[some.toPortId.length - 1];
+        //И пихаем результат в переменную новой функции (порт сверху) по стандарту topX-где X номер.
+        myDiagram.model.setDataProperty(toNode.data.topArray[toPort], "get", undefined);
+        makeFunc(toNode);
+      }
+      console.log(some instanceof go.Link);
+      console.log(some.toNode);
+    });
   })
 
   myDiagram.addDiagramListener('ClipboardChanged', (e)=>{
@@ -522,6 +542,7 @@ function addOnlyPort(side, node) {
 function addFunc() {
   myDiagram.startTransaction("addData");
   myDiagram.selection.each(function(node) {
+    /*
     if (!(node instanceof go.Node)) return;
     let variables = "";
     let variablesData = [];
@@ -551,9 +572,76 @@ function addFunc() {
     //Теперь выполним ее
     result = readyFunc.apply(this, variablesData);
     myDiagram.model.setDataProperty(node.data.bottomArray[0], "return", result);
-    //node.findNodesOutOf().each((nodemon)=>{console.log(nodemon.data)});
+    node.findNodesOutOf().each((nodemon)=>{
+      console.log(nodemon.data);
+      console.log('а ваще ищем че-нить?')
+    });
+    */
+    //Возьмем тело функции
+    let func = document.getElementById("funcText").value;
+    makeFunc(node, func);
+
   });
   myDiagram.commitTransaction("addData");
+}
+function makeFunc(node, funcText){
+  if (!(node instanceof go.Node)) return;
+  let variables = "";
+  let variablesData = [];
+  if(!funcText){
+    funcText = node.data.functionNotBabled;
+  }
+  //перебираем и присваем переменные для модуля
+  if(node.data.topArray.length>0){
+    node.data.topArray.forEach((item, i, arr)=>{
+      if(i >0){
+        variables += ", ";
+      }
+      variables += item.portId;
+      variablesData.push(item.get);
+    });
+  }
+  let result = "";
+  //Возьмем тело функции
+  let func = funcText;
+  node.data.functionNotBabled = func;
+  //Обернем ее в функцию для бабела
+  //И сделаем так, чтобы она сразу выполнялась
+  let funcStet = `(function () {${func}}())`;
+  //Отбаблим ее
+  //Если не поставить ретерн, анонимная функция вернет undefined
+  let babledFunc = `return ${Babel.transform(funcStet, {presets:['react']}).code}`;
+  node.data.functionBabled = babledFunc;
+  //Теперь сделаем объект функции
+  let readyFunc = new Function(variables, babledFunc);
+  //Теперь выполним ее
+  result = readyFunc.apply(this, variablesData);
+  //Запишем в ноду результат функции
+  myDiagram.model.setDataProperty(node.data.bottomArray[0], "return", result);
+  //теперь по стрелкам вниз меняем значения нод-детей
+  //сначала запишем значения в переменные ноды-ребенка
+  node.findLinksOutOf().each((link)=>{
+    console.log(link.toPort);
+    console.log(link.toNode);
+    console.log(link.toNode.data);
+    //ищем переменную ноды ребенка
+    link.toNode.data.topArray.forEach((item, id, array)=>{
+      //если нашли - записываем
+      if(item.portId === link.toPortId){
+        console.log('found!');
+        console.log(id);
+        myDiagram.model.setDataProperty(link.toNode.data.topArray[id], "get", result);
+      }
+    });
+    console.log(link.toPortId);
+    console.log(link.toPort.portId);
+  })
+  //теперь надо выполнить функцию
+  node.findNodesOutOf().each((nodemon)=>{
+    makeFunc(nodemon);
+    console.log('пробиваем')
+  });
+
 }
 
 // Exchange the position/order of the given port with the next one.
